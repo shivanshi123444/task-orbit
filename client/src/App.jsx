@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Plus, Trash2, CheckCircle, Circle, Loader2, Rocket } from 'lucide-react';
 
+// This tells the app to use the live Render link, or localhost if testing locally
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/tasks';
 
 function App() {
