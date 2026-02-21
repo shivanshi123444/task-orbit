@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Plus, Trash2, CheckCircle, Circle, Loader2, Rocket } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000/api/tasks';
+const API_URL = "https://task-orbit-1.onrender.com/api/tasks";;
 
 function App() {
   const [tasks, setTasks] = useState([]);
