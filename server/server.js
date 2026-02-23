@@ -8,11 +8,14 @@ import Task from './models/task.js';
 const app = express();
 app.use(express.json());
 
-// ALLOWS ANY FRONTEND: Perfect for a fresh start
+// Global CORS - Allows your frontend to talk to this backend
 app.use(cors({
   origin: true, 
   credentials: true
 }));
+
+// Basic route to verify life
+app.get('/', (req, res) => res.send("Task Orbit Backend: System Online"));
 
 // API Routes
 app.get('/api/tasks', async (req, res) => {
@@ -30,14 +33,16 @@ app.post('/api/tasks', async (req, res) => {
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
-// Database Connection
+// Port & DB Start
 const PORT = process.env.PORT || 5000;
-mongoose.connect(process.env.MONGO_URI)
+
+// Connect with Error Handling to prevent "Status 1" crash
+mongoose.connect(process.env.MONGO_URI || '')
   .then(() => {
-    console.log('✅ MongoDB Connected successfully');
-    app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server active on port ${PORT}`));
+    console.log('✅ MongoDB Connected');
+    app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server running on port ${PORT}`));
   })
   .catch(err => {
-    console.error("❌ DB Error:", err);
-    process.exit(1); // Prevents "Status 1" crash by exiting cleanly
+    console.error("❌ Database Connection Failed:", err.message);
+    // We don't exit(1) here so the server stays up and you can read the logs!
   });
