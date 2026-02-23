@@ -1,73 +1,46 @@
-import dotenv from 'dotenv';
-dotenv.config();
-import express from 'express';
-import mongoose from 'mongoose';
-import cors from 'cors';
-import Task from './models/task.js';
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+require('dotenv').config();
 
 const app = express();
+
+// 1. Middleware
 app.use(express.json());
+app.use(cors()); // Allows your Cloudflare frontend to talk to this backend
 
-// Global CORS - Essential for Task Orbit to talk across domains
-app.use(cors({
-  origin: true, 
-  credentials: true
-}));
+// 2. MongoDB Connection
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('✅ MongoDB Connected'))
+  .catch(err => console.error('❌ Connection Error:', err));
 
-// Basic route to verify the server is live
-app.get('/', (req, res) => res.send("Task Orbit Backend: System Online"));
+// 3. Task Schema
+const taskSchema = new mongoose.Schema({
+  text: { type: String, required: true },
+  completed: { type: Boolean, default: false }
+});
+const Task = mongoose.model('Task', taskSchema);
 
-// API Routes
+// 4. API Routes
 app.get('/api/tasks', async (req, res) => {
   try {
-    const tasks = await Task.find().sort({ createdAt: -1 });
-    res.json(tasks);
-  } catch (err) { 
-    res.status(500).json({ error: err.message }); 
+    const tasks = await Task.find();
+    res.json(tasks); // ✅ This sends an array [] which .map needs
+  } catch (err) {
+    res.status(500).json([]); // ✅ Even if it fails, send an empty array [] to prevent frontend crash
   }
 });
 
 app.post('/api/tasks', async (req, res) => {
   try {
     const newTask = new Task(req.body);
-    await newTask.save();
-    res.status(201).json(newTask);
-  } catch (err) { 
-    res.status(400).json({ error: err.message }); 
-  }
-});
-
-app.patch('/api/tasks/:id', async (req, res) => {
-  try {
-    const task = await Task.findById(req.params.id);
-    if (!task) return res.status(404).json({ error: "Task not found" });
-    task.completed = !task.completed;
-    await task.save();
-    res.json(task);
+    const savedTask = await newTask.save();
+    res.status(201).json(savedTask); // ✅ Send back the saved task
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error(err);
+    res.status(400).json({ error: "Failed to save task" });
   }
 });
-
-app.delete('/api/tasks/:id', async (req, res) => {
-  try {
-    await Task.findByIdAndDelete(req.params.id);
-    res.json({ message: "Task deleted" });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-// Port & DB Start - Render requires 0.0.0.0 binding and port 10000
-const PORT = process.env.PORT || 10000; 
-
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('✅ MongoDB Connected successfully');
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 Server active on port ${PORT}`);
-    });
-  })
-  .catch(err => {
-    console.error("❌ Database Connection Failed:", err.message);
-  });
+// 5. Start Server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
