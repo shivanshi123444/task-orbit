@@ -10,16 +10,16 @@ const app = express();
 // Middleware
 app.use(express.json());
 
-// UPDATED CORS: Allows Cloudflare, Vercel, and Localhost automatically
+// CORS Configuration
+// This allows your Cloudflare and Vercel URLs to access the backend
 app.use(cors({
-  origin: function (origin, callback) {
-    const allowedPatterns = [/pages\.dev$/, /vercel\.app$/, /localhost:/];
-    if (!origin || allowedPatterns.some(pattern => pattern.test(origin))) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: [
+    "https://task-orbit-zez3-shivanshi123444s-projects.vercel.app", 
+    "https://task-orbit-cszn.vercel.app",
+    /\.pages\.dev$/, // Matches any Cloudflare Pages URL
+    "http://localhost:5173"
+  ],
+  methods: ["GET", "POST", "PATCH", "DELETE"],
   credentials: true
 }));
 
@@ -64,16 +64,16 @@ app.delete('/api/tasks/:id', async (req, res) => {
   }
 });
 
-// Database Connection and Server Start
+// Database Connection & Server Startup
 const PORT = process.env.PORT || 5000;
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
-    console.log('MongoDB Connected successfully');
+    console.log('MongoDB Connected successfully to task-orbit-backend');
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server is running on port ${PORT}`);
+      console.log(`Server running on port ${PORT}`);
     });
   })
   .catch(err => {
-    console.error("Critical: MongoDB Connection Error:", err);
-    process.exit(1);
+    console.error("Database connection error:", err);
+    process.exit(1); 
   });
